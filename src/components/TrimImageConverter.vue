@@ -1,9 +1,12 @@
 <script setup lang="ts">
   import { storeToRefs } from 'pinia';
-  import { watch } from 'vue';
+  import { computed, watch } from 'vue';
   import { useTrimImageStore } from '../store/trimImageStore';
   const {
     generateBase64ImageUrl,
+    moveClipEnter,
+    clipMoving,
+    moveClipLeave,
   } = useTrimImageStore();
   const {
     transferImage,
@@ -21,6 +24,15 @@
     generateBase64ImageUrl()
   });
 
+  const currentEvent = computed(() => {
+    return {
+      mousedown: (event: MouseEvent) => moveClipEnter(event),
+      mousemove: (event: MouseEvent) => clipMoving(event),
+      mouseleave: () => moveClipLeave(),
+      mouseup: () => moveClipLeave(),
+    };
+  });
+
 </script>
 
 <template>
@@ -33,8 +45,11 @@
       <div class="w-full h-full bg-gray-400 mix-blend-screen">
       </div>
       <img 
+        v-on="currentEvent"
+        :style="frameAttribute"
         class="absolute top-0 left-0 image-frame" 
         :src="transferImageUrl"
+        draggable="false"
       >
     </div>
 
@@ -44,15 +59,8 @@
 
 <style scoped>
   .image-frame {
-    /* up right down left  */
-    clip-path: inset(10px 50px 100px 120px);
+    clip-path: inset(var(--clipAttribute));
   }
-  /* .image-frame {
-    left: var(--frameX);
-    top: var(--frameY);
-    width: var(--width);
-    height: var(--height);
-  } */
   .image-overlay {
     width: var(--overlayWidth);
     height: var(--overlayHeight);

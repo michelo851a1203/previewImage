@@ -9,6 +9,9 @@ export interface UseTrimImageStoreType {
   limitSquareHeight: number;
   currentImageWidth: number;
   currentImageHeight: number;
+  isCurrentMoving: boolean;
+  tempLocX: number;
+  tempLocY: number;
 }
 export interface ImageInfoType {
   width: number;
@@ -26,18 +29,28 @@ export const useTrimImageStore = defineStore('trimImage', {
       limitSquareHeight: 200,
       currentImageWidth: 0,
       currentImageHeight: 0,
+      isCurrentMoving: false,
+      tempLocX: -1,
+      tempLocY: -1,
     }
   },
   getters: {
     frameAttribute: (state) => {
-      // return `
-      //   --width:${state.limitSquareWidth}px;
-      //   --height:${state.limitSquareHeight}px;
-      //   --frameX:${state.frameX}px;
-      //   --frameY:${state.frameY}px;
-      // `;
-      return `
+      const top = state.frameY;
+      const left = state.frameX;
 
+      const right 
+        = state.currentImageWidth 
+          - state.limitSquareWidth
+          - state.frameX;
+
+      const bottom  
+        = state.currentImageHeight 
+          - state.limitSquareHeight
+          - state.frameY;
+
+      return `
+        --clipAttribute: ${top}px ${right}px ${bottom}px ${left}px;
       `;
     },
     overlayAttribute: (state) => {
@@ -112,6 +125,51 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.transferImageUrl 
         = await this.getFileBase64String(this.transferImage);
       await this.getConstraint();
+    },
+    moveClipEnter(event: MouseEvent) {
+      this.isCurrentMoving = true;
+      this.tempLocX = event.pageX - this.frameX;
+      this.tempLocY = event.pageY - this.frameY;
+    },
+    clipMoving(event: MouseEvent) {
+      if (
+        !this.isCurrentMoving || 
+        this.tempLocX < 0  ||
+        this.tempLocY < 0
+      ) return;
+      let movingDiffX = event.pageX - this.tempLocX;
+
+      const upperXConstraint 
+        = this.currentImageWidth - this.limitSquareWidth;
+
+      if (movingDiffX < 0) {
+        movingDiffX = 0;
+      }
+
+      if (movingDiffX > upperXConstraint) {
+        movingDiffX = upperXConstraint;
+      }
+
+      this.frameX = movingDiffX;
+
+      let movingDiffY = event.pageY - this.tempLocY;
+
+      const upperYConstraint 
+        = this.currentImageHeight - this.limitSquareHeight;
+      if (movingDiffY < 0) {
+        movingDiffY = 0;
+      }
+
+      if (movingDiffY > upperYConstraint) {
+        movingDiffY = upperYConstraint;
+      }
+
+      this.frameY = movingDiffY;
+    },
+    moveClipLeave() {
+      this.isCurrentMoving = false;
+      this.tempLocX = -1;
+      this.tempLocY = -1;
     }
   }
 })
