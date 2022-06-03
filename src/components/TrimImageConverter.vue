@@ -2,12 +2,14 @@
   import { storeToRefs } from 'pinia';
   import { computed, watch } from 'vue';
   import { useTrimImageStore } from '../store/trimImageStore';
+
   const {
     generateBase64ImageUrl,
     moveClipEnter,
     clipMoving,
     moveClipLeave,
   } = useTrimImageStore();
+
   const {
     transferImage,
     transferImageUrl,

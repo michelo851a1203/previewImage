@@ -7,6 +7,8 @@ export interface UseTrimImageStoreType {
   frameY: number;
   limitSquareWidth: number;
   limitSquareHeight: number;
+  constraintSquareWidth: number;
+  constraintSquareHeight: number;
   currentImageWidth: number;
   currentImageHeight: number;
   isCurrentMoving: boolean;
@@ -27,6 +29,8 @@ export const useTrimImageStore = defineStore('trimImage', {
       frameY: 0,
       limitSquareWidth: 200,
       limitSquareHeight: 200,
+      constraintSquareWidth: 200,
+      constraintSquareHeight: 200,
       currentImageWidth: 0,
       currentImageHeight: 0,
       isCurrentMoving: false,
@@ -74,6 +78,12 @@ export const useTrimImageStore = defineStore('trimImage', {
         throw 'set Transfer not image';
       }
       this.transferImage = setFile;
+    },
+    setConstraint(width: number, height: number) {
+      this.constraintSquareWidth = width;
+      this.constraintSquareHeight = height;
+      this.limitSquareWidth = width;
+      this.limitSquareHeight = height
     },
     async getFileBase64String(imageFile: File): Promise<string> {
       return new Promise((resolve, reject) => {
@@ -147,6 +157,9 @@ export const useTrimImageStore = defineStore('trimImage', {
         this.tempLocX < 0  ||
         this.tempLocY < 0
       ) return;
+      this.movingSquare(event);
+    },
+    movingSquare(event: MouseEvent) {
       let movingDiffX = event.pageX - this.tempLocX;
 
       const upperXConstraint 
@@ -166,6 +179,7 @@ export const useTrimImageStore = defineStore('trimImage', {
 
       const upperYConstraint 
         = this.currentImageHeight - this.limitSquareHeight;
+
       if (movingDiffY < 0) {
         movingDiffY = 0;
       }
@@ -220,6 +234,38 @@ export const useTrimImageStore = defineStore('trimImage', {
           resolve(trimImageResult);
         }
         image.src = this.transferImageUrl;
+      });
+    },
+    async resizeImage(imageUrl: string) {
+      if (
+        this.constraintSquareWidth === this.limitSquareWidth &&
+        this.constraintSquareHeight === this.limitSquareHeight
+      ) {
+        return null;
+      }
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = <HTMLCanvasElement>(document.createElement('canvas'));
+          const ctx = canvas.getContext('2d');
+          if (ctx === null) {
+            reject('context nul');
+            return;
+          }
+          canvas.width = this.constraintSquareWidth;
+          canvas.height = this.constraintSquareHeight;
+          ctx.drawImage(
+            image, 
+            0, 
+            0 ,
+            this.constraintSquareWidth, 
+            this.constraintSquareHeight
+          );
+          const imageResult = canvas.toDataURL();
+          image.remove();
+          resolve(imageResult);
+        }
+        image.src = imageUrl;
       });
     },
   }
