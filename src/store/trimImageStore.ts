@@ -128,13 +128,15 @@ export const useTrimImageStore = defineStore('trimImage', {
 
       this.currentImageWidth = imageInfo.width;
       this.currentImageHeight = imageInfo.height;
-
-      if (this.limitSquareWidth > imageInfo.width) {
-        this.limitSquareWidth = imageInfo.width;
+      this.resetClipFrameLayout();
+    },
+    limitClipFrameLayout() {
+      if (this.limitSquareWidth > this.currentImageWidth) {
+        this.limitSquareWidth = this.currentImageWidth;
       }
 
-      if (this.limitSquareHeight > imageInfo.height) {
-        this.limitSquareHeight = imageInfo.height;
+      if (this.limitSquareHeight > this.currentImageHeight) {
+        this.limitSquareHeight = this.currentImageHeight;
       }
     },
     async generateBase64ImageUrl() {
@@ -157,6 +159,53 @@ export const useTrimImageStore = defineStore('trimImage', {
         this.tempLocX < 0  ||
         this.tempLocY < 0
       ) return;
+
+
+      const edgeX = this.frameX + this.limitSquareWidth - 50;
+      const edgeY = this.frameY + this.limitSquareWidth - 50;
+      const boundary = 50;
+
+      if (this.tempLocX < boundary && this.tempLocY < boundary) {
+        // top - left side
+        return;
+      }
+
+      if (this.tempLocX < boundary && this.tempLocY > edgeY) {
+        // bottom - left side
+        return;
+      }
+
+      if (this.tempLocX > edgeX && this.tempLocY < boundary) {
+        // top - right side
+        return;
+      }
+
+      if (this.tempLocX > edgeX && this.tempLocY > edgeY) {
+        // bottom - right side
+        return;
+      }
+
+      if (this.tempLocX < boundary) {
+        // left side
+        return;
+      }
+
+      if (this.tempLocY < boundary) {
+        // top side
+        return;
+      }
+
+      if (this.tempLocX > edgeX) {
+        // right side
+        return;
+      }
+
+      if (this.tempLocY > edgeY) {
+        // bottom side
+        return;
+      }
+
+
       this.movingSquare(event);
     },
     movingSquare(event: MouseEvent) {
@@ -194,6 +243,13 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.isCurrentMoving = false;
       this.tempLocX = -1;
       this.tempLocY = -1;
+    },
+    resetClipFrameLayout() {
+      this.frameX = 0;
+      this.frameY = 0;
+      this.limitSquareWidth = this.constraintSquareWidth;
+      this.limitSquareHeight = this.constraintSquareHeight;
+      this.limitClipFrameLayout();
     },
     resetImageConvert() {
       this.transferImage = null;
