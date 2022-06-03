@@ -68,6 +68,13 @@ export const useTrimImageStore = defineStore('trimImage', {
     },
   },
   actions: {
+    setTransferImage(setFile: File) {
+      const imageRegExp = new RegExp('^image/', 'g');
+      if (!imageRegExp.test(setFile.type)) {
+        throw 'set Transfer not image';
+      }
+      this.transferImage = setFile;
+    },
     async getFileBase64String(imageFile: File): Promise<string> {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -88,6 +95,8 @@ export const useTrimImageStore = defineStore('trimImage', {
         transferImageElement.onload = () => {
           const imageWidth = transferImageElement.width;
           const imageHeight = transferImageElement.height;
+          transferImageElement.remove();
+
           resolve({
             width: imageWidth,
             height: imageHeight,
@@ -95,6 +104,7 @@ export const useTrimImageStore = defineStore('trimImage', {
         }
 
         transferImageElement.onerror = () => {
+          transferImageElement.remove();
           reject('(new Image)load image error');
         }
 
@@ -170,6 +180,47 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.isCurrentMoving = false;
       this.tempLocX = -1;
       this.tempLocY = -1;
-    }
+    },
+    resetImageConvert() {
+      this.transferImage = null;
+      this.transferImageUrl = '';
+      this.frameX = 0;
+      this.frameY = 0;
+      this.limitSquareWidth = 200;
+      this.limitSquareHeight = 200;
+      this.currentImageWidth = 0;
+      this.currentImageHeight = 0;
+    },
+    async trimImage(): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = <HTMLCanvasElement>(document.createElement('canvas'));
+          const ctx = canvas.getContext('2d');
+          if (ctx === null) {
+            image.remove();
+            reject('context is null');
+            return;
+          }
+          canvas.width = this.limitSquareWidth;
+          canvas.height = this.limitSquareHeight;
+          ctx.drawImage(
+            image, 
+            0, 
+            0, 
+            this.currentImageWidth,
+            this.currentImageHeight,
+            this.frameX * -1,
+            this.frameY * -1,
+            this.currentImageWidth,
+            this.currentImageHeight,
+          )
+          const trimImageResult = canvas.toDataURL();
+          image.remove();
+          resolve(trimImageResult);
+        }
+        image.src = this.transferImageUrl;
+      });
+    },
   }
 })

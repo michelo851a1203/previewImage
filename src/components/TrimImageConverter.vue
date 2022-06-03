@@ -12,11 +12,6 @@
     transferImage,
     transferImageUrl,
     frameAttribute,
-    limitSquareWidth,
-    limitSquareHeight,
-    currentImageWidth,
-    currentImageHeight,
-    overlayAttribute,
     getBackgroundImage,
   } = storeToRefs(useTrimImageStore());
 
@@ -32,7 +27,6 @@
       mouseup: () => moveClipLeave(),
     };
   });
-
 </script>
 
 <template>
