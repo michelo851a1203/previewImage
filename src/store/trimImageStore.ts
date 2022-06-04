@@ -18,6 +18,7 @@ export interface UseTrimImageStoreType {
   tempLocHeight: number;
   fixLocWidth: number;
   fixLocHeight: number;
+  constraintBoundary: number;
 }
 export interface ImageInfoType {
   width: number;
@@ -44,6 +45,7 @@ export const useTrimImageStore = defineStore('trimImage', {
       tempLocHeight: 0,
       fixLocWidth: 0,
       fixLocHeight: 0,
+      constraintBoundary: 50,
     }
   },
   getters: {
@@ -173,47 +175,47 @@ export const useTrimImageStore = defineStore('trimImage', {
       ) return;
 
 
-      const boundary = 50;
-      const edgeX = this.limitSquareWidth - boundary;
-      const edgeY = this.limitSquareHeight - boundary;
+      const edgeX = this.limitSquareWidth - this.constraintBoundary;
+      const edgeY = this.limitSquareHeight - this.constraintBoundary;
+      const currentLocX = event.pageX - this.frameX;
+      const currentLocY = event.pageY - this.frameY;
 
-      if (this.tempLocX < boundary && this.tempLocY < boundary) {
+      if (currentLocX < this.constraintBoundary && currentLocY < this.constraintBoundary) {
         this.expandLeftTopSquare(event);
         return;
       }
 
-      if (this.tempLocX < boundary && this.tempLocY > edgeY) {
+      if (currentLocX < this.constraintBoundary && currentLocY > edgeY) {
         this.expandLeftBottomSquare(event);
         return;
       }
 
-      if (this.tempLocX > edgeX && this.tempLocY < boundary) {
+      if (currentLocX > edgeX && currentLocY < this.constraintBoundary) {
         this.expandRightTopSquare(event);
         return;
       }
 
-      if (this.tempLocX > edgeX && this.tempLocY > edgeY) {
-        console.log('bottom right');
+      if (currentLocX > edgeX && currentLocY > edgeY) {
         this.expandRightBottomSquare(event);
         return;
       }
 
-      if (this.tempLocX < boundary) {
+      if (currentLocX < this.constraintBoundary) {
         this.expandLeftSquare(event);
         return;
       }
 
-      if (this.tempLocY < boundary) {
+      if (currentLocY < this.constraintBoundary) {
         this.expandTopSquare(event);
         return;
       }
 
-      if (this.tempLocX > edgeX) {
+      if (currentLocX > edgeX) {
         this.expandRightSquare(event);
         return;
       }
 
-      if (this.tempLocY > edgeY) {
+      if (currentLocY > edgeY) {
         this.expandBottomSquare(event);
         return;
       }
@@ -239,20 +241,43 @@ export const useTrimImageStore = defineStore('trimImage', {
     expandLeftSquare(event: MouseEvent) {
       let movingDiffX = event.pageX - this.tempLocX;
       this.frameX = movingDiffX;
-      this.limitSquareWidth = this.fixLocWidth - this.frameX;
+      const setWidth = this.fixLocWidth - this.frameX;
+      this.expandXConstraint(setWidth);
     },
     expandRightSquare(event: MouseEvent) {
       let movingDiffX = event.pageX - this.tempLocX;
-      this.limitSquareWidth = movingDiffX + this.tempLocWidth - this.frameX;
+      const setWidth = movingDiffX + this.tempLocWidth - this.frameX;
+      this.expandXConstraint(setWidth);
     },
     expandTopSquare(event: MouseEvent) {
       let movingDiffY = event.pageY - this.tempLocY;
       this.frameY = movingDiffY;
-      this.limitSquareHeight = this.fixLocHeight - this.frameY;
+      const setHeight = this.fixLocHeight - this.frameY;
+      this.setExpandYConstraint(setHeight);
     },
     expandBottomSquare(event: MouseEvent) {
       let movingDiffY = event.pageY - this.tempLocY;
       this.limitSquareHeight = movingDiffY + this.tempLocHeight - this.frameY;
+      const setWidth = movingDiffY + this.tempLocHeight - this.frameY;
+      this.setExpandYConstraint(setWidth);
+    },
+    expandXConstraint(setWidth: number) {
+      if (this.limitSquareWidth > this.currentImageWidth) {
+        this.limitSquareWidth = this.currentImageWidth;
+      }
+      if (this.limitSquareWidth < 2 * this.constraintBoundary) {
+        this.limitSquareWidth = 2 * this.constraintBoundary;
+      }
+      this.limitSquareWidth = setWidth;
+    },
+    setExpandYConstraint(setHeight: number) {
+      if (setHeight > this.currentImageHeight) {
+        this.limitSquareHeight = this.currentImageHeight;
+      }
+      if (setHeight < 2 * this.constraintBoundary) {
+        this.limitSquareHeight = 2 * this.constraintBoundary;
+      }
+      this.limitSquareHeight = setHeight;
     },
     movingSquare(event: MouseEvent) {
       let movingDiffX = event.pageX - this.tempLocX;
