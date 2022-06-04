@@ -14,6 +14,10 @@ export interface UseTrimImageStoreType {
   isCurrentMoving: boolean;
   tempLocX: number;
   tempLocY: number;
+  tempLocWidth: number;
+  tempLocHeight: number;
+  fixLocWidth: number;
+  fixLocHeight: number;
 }
 export interface ImageInfoType {
   width: number;
@@ -36,6 +40,10 @@ export const useTrimImageStore = defineStore('trimImage', {
       isCurrentMoving: false,
       tempLocX: -1,
       tempLocY: -1,
+      tempLocWidth: 0,
+      tempLocHeight: 0,
+      fixLocWidth: 0,
+      fixLocHeight: 0,
     }
   },
   getters: {
@@ -152,6 +160,10 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.isCurrentMoving = true;
       this.tempLocX = event.pageX - this.frameX;
       this.tempLocY = event.pageY - this.frameY;
+      this.tempLocWidth = this.limitSquareWidth;
+      this.tempLocHeight = this.limitSquareHeight;
+      this.fixLocWidth = this.limitSquareWidth + this.frameX;
+      this.fixLocHeight = this.limitSquareHeight + this.frameY;
     },
     clipMoving(event: MouseEvent) {
       if (
@@ -161,52 +173,86 @@ export const useTrimImageStore = defineStore('trimImage', {
       ) return;
 
 
-      const edgeX = this.frameX + this.limitSquareWidth - 50;
-      const edgeY = this.frameY + this.limitSquareWidth - 50;
       const boundary = 50;
+      const edgeX = this.limitSquareWidth - boundary;
+      const edgeY = this.limitSquareHeight - boundary;
 
       if (this.tempLocX < boundary && this.tempLocY < boundary) {
-        // top - left side
+        this.expandLeftTopSquare(event);
         return;
       }
 
       if (this.tempLocX < boundary && this.tempLocY > edgeY) {
-        // bottom - left side
+        this.expandLeftBottomSquare(event);
         return;
       }
 
       if (this.tempLocX > edgeX && this.tempLocY < boundary) {
-        // top - right side
+        this.expandRightTopSquare(event);
         return;
       }
 
       if (this.tempLocX > edgeX && this.tempLocY > edgeY) {
-        // bottom - right side
+        console.log('bottom right');
+        this.expandRightBottomSquare(event);
         return;
       }
 
       if (this.tempLocX < boundary) {
-        // left side
+        this.expandLeftSquare(event);
         return;
       }
 
       if (this.tempLocY < boundary) {
-        // top side
+        this.expandTopSquare(event);
         return;
       }
 
       if (this.tempLocX > edgeX) {
-        // right side
+        this.expandRightSquare(event);
         return;
       }
 
       if (this.tempLocY > edgeY) {
-        // bottom side
+        this.expandBottomSquare(event);
         return;
       }
 
-
       this.movingSquare(event);
+    },
+    expandLeftTopSquare(event: MouseEvent) {
+      this.expandLeftSquare(event);
+      this.expandTopSquare(event);
+    },
+    expandRightTopSquare(event: MouseEvent) {
+      this.expandRightSquare(event);
+      this.expandTopSquare(event);
+    },
+    expandRightBottomSquare(event: MouseEvent) {
+      this.expandRightSquare(event);
+      this.expandBottomSquare(event);
+    },
+    expandLeftBottomSquare(event: MouseEvent) {
+      this.expandBottomSquare(event);
+      this.expandLeftSquare(event);
+    },
+    expandLeftSquare(event: MouseEvent) {
+      let movingDiffX = event.pageX - this.tempLocX;
+      this.frameX = movingDiffX;
+      this.limitSquareWidth = this.fixLocWidth - this.frameX;
+    },
+    expandRightSquare(event: MouseEvent) {
+      let movingDiffX = event.pageX - this.tempLocX;
+      this.limitSquareWidth = movingDiffX + this.tempLocWidth - this.frameX;
+    },
+    expandTopSquare(event: MouseEvent) {
+      let movingDiffY = event.pageY - this.tempLocY;
+      this.frameY = movingDiffY;
+      this.limitSquareHeight = this.fixLocHeight - this.frameY;
+    },
+    expandBottomSquare(event: MouseEvent) {
+      let movingDiffY = event.pageY - this.tempLocY;
+      this.limitSquareHeight = movingDiffY + this.tempLocHeight - this.frameY;
     },
     movingSquare(event: MouseEvent) {
       let movingDiffX = event.pageX - this.tempLocX;
@@ -243,6 +289,10 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.isCurrentMoving = false;
       this.tempLocX = -1;
       this.tempLocY = -1;
+      this.tempLocWidth = 0;
+      this.tempLocHeight = 0;
+      this.fixLocWidth = 0;
+      this.fixLocHeight = 0;
     },
     resetClipFrameLayout() {
       this.frameX = 0;
