@@ -258,24 +258,28 @@ export const useTrimImageStore = defineStore('trimImage', {
     expandBottomSquare(event: MouseEvent) {
       let movingDiffY = event.pageY - this.tempLocY;
       this.limitSquareHeight = movingDiffY + this.tempLocHeight - this.frameY;
-      const setWidth = movingDiffY + this.tempLocHeight - this.frameY;
-      this.setExpandYConstraint(setWidth);
+      const setHeight = movingDiffY + this.tempLocHeight - this.frameY;
+      this.setExpandYConstraint(setHeight);
     },
     expandXConstraint(setWidth: number) {
-      if (this.limitSquareWidth > this.currentImageWidth) {
+      if (setWidth > this.currentImageWidth) {
         this.limitSquareWidth = this.currentImageWidth;
+        return;
       }
-      if (this.limitSquareWidth < 2 * this.constraintBoundary) {
-        this.limitSquareWidth = 2 * this.constraintBoundary;
+      if (setWidth < 3 * this.constraintBoundary) {
+        this.limitSquareWidth = 3 * this.constraintBoundary;
+        return;
       }
       this.limitSquareWidth = setWidth;
     },
     setExpandYConstraint(setHeight: number) {
       if (setHeight > this.currentImageHeight) {
         this.limitSquareHeight = this.currentImageHeight;
+        return;
       }
-      if (setHeight < 2 * this.constraintBoundary) {
-        this.limitSquareHeight = 2 * this.constraintBoundary;
+      if (setHeight < 3 * this.constraintBoundary) {
+        this.limitSquareHeight = 3 * this.constraintBoundary;
+        return;
       }
       this.limitSquareHeight = setHeight;
     },
