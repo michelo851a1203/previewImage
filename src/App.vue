@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { Ref, ref, watch } from 'vue';
+  import { computed, Ref, ref, watch } from 'vue';
   import TrimImageConverter from './components/TrimImageConverter.vue';
   import { useTrimImageStore } from './store/trimImageStore';
   const currentImageUrl = ref('');
@@ -104,13 +104,62 @@
       currentImage.value = getAns;
     }
   }
+
+  const currentShowFile = ref(false);
+  function dropHandler(event: DragEvent) {
+    const transferObject = event.dataTransfer;
+    if (transferObject === null) return;
+    if (transferObject.items[0].kind === 'file') {
+      const file = transferObject.items[0].getAsFile();
+      if (file === null) return;
+      const imageRegExp = new RegExp('image/*','g')
+      if (!imageRegExp.test(file.type)) return;
+      const result = URL.createObjectURL(file);
+      console.log(result);
+      currentShowFile.value = false;
+    }
+  }
+
+  function detectDragHandler(event: DragEvent) {
+    const transferObject = event.dataTransfer;
+    if (transferObject === null) return;
+    if (transferObject.items[0].kind === 'file') {
+      currentShowFile.value = true;
+    }
+  }
+  function leaveHandler() {
+    currentShowFile.value = false;
+  }
+  const dragFileZoneEvent = computed(() => {
+    return {
+      drop: (event: DragEvent) => {
+        event.preventDefault();
+        dropHandler(event);
+      },
+      dragover: (event: DragEvent) => {
+        event.preventDefault();
+        detectDragHandler(event);
+      },
+      dragleave: () => leaveHandler(),
+    };
+  })
+
 </script>
 
 <template>
+  <div 
+    v-on="dragFileZoneEvent"
+    class="w-64 h-64 rounded-xl bg-blue-300 flex items-center justify-center "
+  >
+  <div v-if="currentShowFile" class="w-16 h-16 rounded-full bg-green-800 animate-bounce"></div>
+  </div>
+
   <input @change="changeToImage" type="file" accept="image/*">
   <TrimImageConverter></TrimImageConverter>
   <button @click="sureToGetImage">test click</button>
   <img class="border border-black" v-if="currentImage !== ''" :src="currentImage" alt="">
+
+
 </template>
 
 <style>
