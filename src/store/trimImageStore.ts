@@ -461,7 +461,11 @@ export const useTrimImageStore = defineStore('trimImage', {
           return await this.trimImage();
         }
         const trimImage = await this.trimImage();
-        return await this.resizeImage(trimImage, this.constraintSquareWidth, this.constraintSquareHeight);
+        const result =  await this.resizeImage(trimImage, this.constraintSquareWidth, this.constraintSquareHeight);
+        if (result === '') {
+          return trimImage;
+        }
+        return result;
       } catch (error) {
         console.error(error);
       }
