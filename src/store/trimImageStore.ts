@@ -46,7 +46,7 @@ export const useTrimImageStore = defineStore('trimImage', {
       tempLocHeight: 0,
       fixLocWidth: 0,
       fixLocHeight: 0,
-      constraintBoundary: 50,
+      constraintBoundary: 25,
       needTrimConstraint: false,
     }
   },
@@ -179,7 +179,6 @@ export const useTrimImageStore = defineStore('trimImage', {
         this.tempLocY < 0
       ) return;
 
-
       const edgeX = this.limitSquareWidth - this.constraintBoundary;
       const edgeY = this.limitSquareHeight - this.constraintBoundary;
       const currentLocX = event.pageX - this.frameX;
@@ -244,23 +243,37 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.expandLeftSquare(event);
     },
     expandLeftSquare(event: MouseEvent) {
+      if (2 * this.constraintBoundary > this.currentImageWidth) {
+        return;
+      }
       let movingDiffX = event.pageX - this.tempLocX;
       this.frameX = movingDiffX;
       const setWidth = this.fixLocWidth - this.frameX;
       this.expandXConstraint(setWidth);
     },
     expandRightSquare(event: MouseEvent) {
+      if (2 * this.constraintBoundary > this.currentImageWidth) {
+        return;
+      }
       let movingDiffX = event.pageX - this.tempLocX;
       const setWidth = movingDiffX + this.tempLocWidth - this.frameX;
       this.expandXConstraint(setWidth);
     },
     expandTopSquare(event: MouseEvent) {
+      if (2 * this.constraintBoundary > this.currentImageHeight) {
+        return;
+      }
+
       let movingDiffY = event.pageY - this.tempLocY;
       this.frameY = movingDiffY;
       const setHeight = this.fixLocHeight - this.frameY;
       this.setExpandYConstraint(setHeight);
     },
     expandBottomSquare(event: MouseEvent) {
+      if (2 * this.constraintBoundary > this.currentImageHeight) {
+        return;
+      }
+
       let movingDiffY = event.pageY - this.tempLocY;
       this.limitSquareHeight = movingDiffY + this.tempLocHeight - this.frameY;
       const setHeight = movingDiffY + this.tempLocHeight - this.frameY;
@@ -302,7 +315,9 @@ export const useTrimImageStore = defineStore('trimImage', {
         movingDiffX = upperXConstraint;
       }
 
-      this.frameX = movingDiffX;
+      if (2 * this.constraintBoundary < this.currentImageWidth) {
+        this.frameX = movingDiffX;
+      }
 
       let movingDiffY = event.pageY - this.tempLocY;
 
@@ -317,7 +332,9 @@ export const useTrimImageStore = defineStore('trimImage', {
         movingDiffY = upperYConstraint;
       }
 
-      this.frameY = movingDiffY;
+      if (3 * this.constraintBoundary < this.currentImageHeight) {
+        this.frameY = movingDiffY;
+      }
     },
     moveClipLeave() {
       this.isCurrentMoving = false;
