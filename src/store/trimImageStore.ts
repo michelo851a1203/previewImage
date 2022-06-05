@@ -19,6 +19,7 @@ export interface UseTrimImageStoreType {
   fixLocWidth: number;
   fixLocHeight: number;
   constraintBoundary: number;
+  needTrimConstraint: boolean;
 }
 export interface ImageInfoType {
   width: number;
@@ -46,6 +47,7 @@ export const useTrimImageStore = defineStore('trimImage', {
       fixLocWidth: 0,
       fixLocHeight: 0,
       constraintBoundary: 50,
+      needTrimConstraint: false,
     }
   },
   getters: {
@@ -94,6 +96,9 @@ export const useTrimImageStore = defineStore('trimImage', {
       this.constraintSquareHeight = height;
       this.limitSquareWidth = width;
       this.limitSquareHeight = height
+    },
+    enableConstraint(isEnable: boolean) {
+      this.needTrimConstraint = isEnable;
     },
     async getFileBase64String(imageFile: File): Promise<string> {
       return new Promise((resolve, reject) => {
@@ -371,12 +376,16 @@ export const useTrimImageStore = defineStore('trimImage', {
         image.src = this.transferImageUrl;
       });
     },
-    async resizeImage(imageUrl: string) {
+    async resizeImage(
+      imageUrl: string, 
+      resizeWidth: number, 
+      resizeHeight: number
+    ): Promise<string> {
       if (
         this.constraintSquareWidth === this.limitSquareWidth &&
         this.constraintSquareHeight === this.limitSquareHeight
       ) {
-        return null;
+        return '';
       }
       return new Promise((resolve, reject) => {
         const image = new Image();
@@ -387,14 +396,14 @@ export const useTrimImageStore = defineStore('trimImage', {
             reject('context nul');
             return;
           }
-          canvas.width = this.constraintSquareWidth;
-          canvas.height = this.constraintSquareHeight;
+          canvas.width = resizeWidth;
+          canvas.height = resizeHeight;
           ctx.drawImage(
             image, 
             0, 
             0 ,
-            this.constraintSquareWidth, 
-            this.constraintSquareHeight
+            resizeWidth,
+            resizeHeight,
           );
           const imageResult = canvas.toDataURL();
           image.remove();
@@ -402,6 +411,43 @@ export const useTrimImageStore = defineStore('trimImage', {
         }
         image.src = imageUrl;
       });
+    },
+    constraintSquareSize(): { resizeImageWidth: number, resizeImageHeight: number} {
+      let resizeImageWidth = 0;
+      let resizeImageHeight = 0;
+
+      const imageXYRatio = this.limitSquareWidth / this.limitSquareHeight;
+      if (imageXYRatio > 1) {
+        resizeImageWidth = this.limitSquareWidth;
+        resizeImageHeight = this.limitSquareWidth / imageXYRatio;
+        if (resizeImageHeight > this.constraintSquareHeight) {
+          resizeImageWidth = this.constraintSquareHeight * imageXYRatio;
+          resizeImageHeight = this.constraintSquareHeight;
+        }
+      } else {
+        resizeImageWidth = this.limitSquareHeight * imageXYRatio;
+        resizeImageHeight = this.limitSquareHeight;
+        if (resizeImageWidth > this.constraintSquareWidth) {
+          resizeImageWidth = this.constraintSquareWidth;
+          resizeImageHeight = this.constraintSquareWidth / imageXYRatio;
+        }
+      }
+
+      return {
+        resizeImageWidth,
+        resizeImageHeight,
+      }
+    },
+    async exportImageBase64() {
+      try {
+        if (!this.needTrimConstraint) {
+          return await this.trimImage();
+        }
+        const trimImage = await this.trimImage();
+        return await this.resizeImage(trimImage, this.constraintSquareWidth, this.constraintSquareHeight);
+      } catch (error) {
+        console.error(error);
+      }
     },
   }
 })

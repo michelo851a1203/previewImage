@@ -84,7 +84,8 @@
 
   const {
     setTransferImage,
-    trimImage,
+    exportImageBase64,
+    enableConstraint,
   } = useTrimImageStore();
 
   const currentImage = ref('');
@@ -97,7 +98,11 @@
     setTransferImage(imageFile);
   }
   async function sureToGetImage() {
-    currentImage.value = await trimImage();
+    enableConstraint(true);
+    const getAns = await exportImageBase64();
+    if (getAns) {
+      currentImage.value = getAns;
+    }
   }
 </script>
 
